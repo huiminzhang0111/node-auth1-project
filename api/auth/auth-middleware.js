@@ -6,6 +6,8 @@
     "message": "You shall not pass!"
   }
 */
+
+const db = require('../../data/db-config')
 function restricted(req, res, next) {
   if (req.session.user) {
     next()
@@ -25,8 +27,23 @@ function restricted(req, res, next) {
     "message": "Username taken"
   }
 */
-function checkUsernameFree() {
+const checkUsernameFree = async (req, res, next) => {
+  try {
+    const existing = await db('users')
+      .where('username', req.body.username)
+      .first()
 
+    if (existing) {
+      next({
+        status: 422,
+        message: "Username taken"
+      })
+    } else {
+      next()
+    }
+  } catch(err) {
+    next(err)
+  }
 }
 
 /*
@@ -37,8 +54,22 @@ function checkUsernameFree() {
     "message": "Invalid credentials"
   }
 */
-function checkUsernameExists() {
-
+const checkUsernameExists = async(req, res, next) => {
+  try {
+    const existing = await db('users')
+      .where('username', req.body.username)
+      .first()
+    if (!existing) {
+      next({
+        status: 401,
+        message: "Invalid credentials"
+      })
+    } else {
+      next()
+    }
+  } catch(err) {
+    next(err)
+  }
 }
 
 /*
@@ -50,7 +81,15 @@ function checkUsernameExists() {
   }
 */
 function checkPasswordLength() {
-
+  const { password } = req.body
+  if (password === undefined || password.length <= 3) {
+    next ({
+      status: 422,
+      message: "Password must be longer than 3 chars"
+    })
+  } else {
+    next()
+  }
 }
 
 // Don't forget to add these to the `exports` object so they can be required in other modules
